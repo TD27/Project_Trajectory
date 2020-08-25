@@ -6,129 +6,102 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-Gravity_Acc=9.81 #gravity accleration
-DataX=[]
-DataY=[]
-Pairs=np.array([("Angle","Velocity")])
-Direction=True
+gravity_acc=9.81 #gravity accleration
+data_y=[]
+pairs=np.array([("angle","velocity")])
+direction=True
 
-Barrier=[75,100,300]
-Landing_Zone=[50,70,0]
-VelocityRange=[80,100,1]
-AngleRange=[85,90,1]
-TimeRange=[0,50,0.1] #StartTime,EndTime,Step
+barrier=[75,100,300]
+landing_zone=[50,70,0]
+velocity_range=[80,100,1]
+angle_range=[85,90,1]
+time_range=[0,50,0.1] #start_time,end_time,step
 
+line1_x=np.full(barrier[2],barrier[0])
+line1_y=np.arange(0,barrier[2],1)
+line2_x=np.arange(barrier[0],barrier[1],1)
+line2_y=np.full(barrier[1]-barrier[0],barrier[2])
+line3_x=np.full(barrier[2],barrier[1])
+line3_y=np.arange(0,barrier[2],1)
 
-# It is definition of lines that will draw the Barrier
+# Calculation of X coordinate of value
+def X_coordinate (value,angle):
+    return value*math.cos(math.radians(angle))
 
-# In[4]:
+# Calculation of Y coordinate of value
+def Y_coordinate (value,angle):
+    return value*math.sin(math.radians(angle))
 
-
-Line1X=np.full(Barrier[2],Barrier[0])
-Line1Y=np.arange(0,Barrier[2],1)
-Line2X=np.arange(Barrier[0],Barrier[1],1)
-Line2Y=np.full(Barrier[1]-Barrier[0],Barrier[2])
-Line3X=np.full(Barrier[2],Barrier[1])
-Line3Y=np.arange(0,Barrier[2],1)
-
-
-# In[5]:
-
-
-# Calculation of X coordinate of Value
-def X_coordinate (Value,Angle):
-    return Value*math.cos(math.radians(Angle))
-
-# Calculation of Y coordinate of Value
-def Y_coordinate (Value,Angle):
-    return Value*math.sin(math.radians(Angle))
-
-def TrajectoryPointX (V,T,Angle,Direction,StartX):
-    if Direction:
-        return StartX+X_coordinate(V,Angle)*T
+def TrajectoryPointX (V,T,angle,direction,start_x):
+    if direction:
+        return start_x+X_coordinate(V,angle)*T
     else:
-        return 2*StartX-X_coordinate(V,Angle)*T
+        return 2*start_x-X_coordinate(V,angle)*T
 
-# Calculation of the Reflection --- DOESN'T WORK ---
-def TrajectoryPointY (V,T,Angle,Reflection,TimeY,StartY):
-    if Reflection:
-        return StartY+Y_coordinate(V*0.75,Angle)*(T-TimeY)-0.5*Gravity_Acc*(T-TimeY)*(T-TimeY)
+# Calculation of the reflection --- DOESN'T WORK ---
+def TrajectoryPointY (V,T,angle,reflection,time_y,start_y):
+    if reflection:
+        return start_y+Y_coordinate(V*0.75,angle)*(T-time_y)-0.5*gravity_acc*(T-time_y)*(T-time_y)
     else:
-        return Y_coordinate(V,Angle)*T-0.5*Gravity_Acc*T*T
+        return Y_coordinate(V,angle)*T-0.5*gravity_acc*T*T
 
+def XYcalc (velocity,angle,start_x,start_y,time_y,start_time,end_time,step):
+    direction=True
+    landing_check=False
+    reflection=False
+    for time in np.arange(start_time,end_time,step):
+        x=TrajectoryPointX(velocity,time,angle,direction,start_x)
+        y=TrajectoryPointY(velocity,time,angle,reflection,time_y,start_y)
 
-# In[6]:
+        if x > barrier[0] and y > barrier[2]: #point is above the barrier
+            above=True
+            bellow=False
+        elif x < barrier[0] and y < barrier[2]: #point is bellow the barrier
+            above=False
+            bellow=True
 
+        if x > barrier[0] and y < barrier[2] and bellow: #point is in the barrier and comes from side
+            direction=False #direction will change
+            reflection=False #no reflection
+            start_x=x
 
-def XYcalc (Velocity,Angle,StartX,StartY,TimeY,StartTime,EndTime,Step):
-    Direction=True
-    LandingCheck=False
-    Reflection=False
-    for Time in np.arange(StartTime,EndTime,Step):
-        x=TrajectoryPointX(Velocity,Time,Angle,Direction,StartX)
-        y=TrajectoryPointY(Velocity,Time,Angle,Reflection,TimeY,StartY)
+        if x > barrier[0] and y < barrier[2] and x < barrier[1] and y < barrier[2]and above: #point is in the barrier and comes from top
+            direction=True #direction will not change
+            reflection=True
+            start_y=y
+            time_y=time
 
-        if x > Barrier[0] and y > Barrier[2]: #point is above the barrier
-            Above=True
-            Bellow=False
-        elif x < Barrier[0] and y < Barrier[2]: #point is bellow the barrier
-            Above=False
-            Bellow=True
-
-        if x > Barrier[0] and y < Barrier[2] and Bellow: #point is in the barrier and comes from side
-            Direction=False #direction will change
-            Reflection=False #no reflection
-            StartX=x
-
-        if x > Barrier[0] and y < Barrier[2] and x < Barrier[1] and y < Barrier[2]and Above: #point is in the barrier and comes from top
-            Direction=True #direction will not change
-            Reflection=True
-            StartY=y
-            TimeY=Time
-
-        if ((x > Landing_Zone[0] and y < 0) and (x < Landing_Zone[1] and y < 0)): #getting to the LandingZone
-            LandingCheck=True
+        if ((x > landing_zone[0] and y < 0) and (x < landing_zone[1] and y < 0)): #getting to the LandingZone
+            landing_check=True
             break
 
         if y < 0:
             break
 
-        TmpX.append(x)
-        TmpY.append(y)
+        tmp_x.append(x)
+        tmp_y.append(y)
 
-    return TmpX,TmpY,LandingCheck
-
-
-# In[7]:
+    return tmp_x,tmp_y,landing_check
 
 
-for Velocity in np.arange(VelocityRange[0],VelocityRange[1],VelocityRange[2]):
-    for Angle in np.arange(AngleRange[0],AngleRange[1],AngleRange[2]):
-        TmpX=[]
-        TmpY=[]
+for velocity in np.arange(velocity_range[0],velocity_range[1],velocity_range[2]):
+    for angle in np.arange(angle_range[0],angle_range[1],angle_range[2]):
+        tmp_x=[]
+        tmp_y=[]
 
-        TmpX,TmpY,LandingCheck=XYcalc(Velocity,Angle,0,0,0,TimeRange[0],TimeRange[1],TimeRange[2])
+        tmp_x,tmp_y,landing_check=XYcalc(velocity,angle,0,0,0,time_range[0],time_range[1],time_range[2])
 
-#        if LandingCheck:
-        DataX=DataX+TmpX
-        DataY=DataY+TmpY
-
-
-# In[8]:
+#        if landing_check:
+        data_x=data_x+tmp_x
+        data_y=data_y+tmp_y
 
 
-print(Pairs)
-
-
-# In[9]:
+print(pairs)
 
 
 plt.title('Graf')
-plt.plot(DataX, DataY)
-plt.plot(Line1X,Line1Y,color='red',linewidth=3)
-plt.plot(Line2X,Line2Y,color='red',linewidth=3)
-plt.plot(Line3X,Line3Y,color='red',linewidth=3)
+plt.plot(data_x, data_y)
+plt.plot(line1_x,line1_y,color='red',linewidth=3)
+plt.plot(line2_x,line2_y,color='red',linewidth=3)
+plt.plot(line3_x,line3_y,color='red',linewidth=3)
 plt.show()
-
-
-# In[ ]:
