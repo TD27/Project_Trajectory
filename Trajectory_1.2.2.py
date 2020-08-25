@@ -6,17 +6,20 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-gravity_acc=9.81 #gravity accleration
+gravity_acc=9.81 #gravity acceleration
 data_y=[]
+data_x=[]
 pairs=np.array([("angle","velocity")])
 direction=True
 
+# Definition of variables
 barrier=[75,100,300]
 landing_zone=[50,70,0]
 velocity_range=[80,100,1]
 angle_range=[85,90,1]
 time_range=[0,50,0.1] #start_time,end_time,step
 
+#
 line1_x=np.full(barrier[2],barrier[0])
 line1_y=np.arange(0,barrier[2],1)
 line2_x=np.arange(barrier[0],barrier[1],1)
@@ -24,34 +27,36 @@ line2_y=np.full(barrier[1]-barrier[0],barrier[2])
 line3_x=np.full(barrier[2],barrier[1])
 line3_y=np.arange(0,barrier[2],1)
 
-# Calculation of X coordinate of value
+# Calculation of X coordinate of speed vector
 def X_coordinate (value,angle):
     return value*math.cos(math.radians(angle))
 
-# Calculation of Y coordinate of value
+# Calculation of Y coordinate of speed vector
 def Y_coordinate (value,angle):
     return value*math.sin(math.radians(angle))
 
-def TrajectoryPointX (V,T,angle,direction,start_x):
+# Calculation of the x value of trajectory
+def trajectory_point_x (V,T,angle,direction,start_x):
     if direction:
         return start_x+X_coordinate(V,angle)*T
     else:
         return 2*start_x-X_coordinate(V,angle)*T
 
-# Calculation of the reflection --- DOESN'T WORK ---
-def TrajectoryPointY (V,T,angle,reflection,time_y,start_y):
+# Calculation of the y value of trajectory ----> calculation of the reflection DOESN'T work ---
+def trajectory_point_y (V,T,angle,reflection,time_y,start_y):
     if reflection:
         return start_y+Y_coordinate(V*0.75,angle)*(T-time_y)-0.5*gravity_acc*(T-time_y)*(T-time_y)
     else:
         return Y_coordinate(V,angle)*T-0.5*gravity_acc*T*T
 
-def XYcalc (velocity,angle,start_x,start_y,time_y,start_time,end_time,step):
+# Calculation of the trajectory
+def XY_calc (velocity,angle,start_x,start_y,time_y,start_time,end_time,step):
     direction=True
     landing_check=False
     reflection=False
     for time in np.arange(start_time,end_time,step):
-        x=TrajectoryPointX(velocity,time,angle,direction,start_x)
-        y=TrajectoryPointY(velocity,time,angle,reflection,time_y,start_y)
+        x=trajectory_point_x(velocity,time,angle,direction,start_x)
+        y=trajectory_point_y(velocity,time,angle,reflection,time_y,start_y)
 
         if x > barrier[0] and y > barrier[2]: #point is above the barrier
             above=True
@@ -89,7 +94,7 @@ for velocity in np.arange(velocity_range[0],velocity_range[1],velocity_range[2])
         tmp_x=[]
         tmp_y=[]
 
-        tmp_x,tmp_y,landing_check=XYcalc(velocity,angle,0,0,0,time_range[0],time_range[1],time_range[2])
+        tmp_x,tmp_y,landing_check=XY_calc(velocity,angle,0,0,0,time_range[0],time_range[1],time_range[2])
 
 #        if landing_check:
         data_x=data_x+tmp_x
