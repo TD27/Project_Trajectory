@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
 import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-
-# In[2]:
-
 
 Gravity_Acc=9.81 #gravity accleration
 DataX=[]
 DataY=[]
 Pairs=np.array([("Angle","Velocity")])
 Direction=True
-
-
-# In[3]:
-
 
 Barrier=[75,100,300]
 Landing_Zone=[50,70,0]
